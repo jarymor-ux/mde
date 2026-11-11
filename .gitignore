@@ -1,0 +1,6 @@
+/target/
+/.omx/
+.DS_Store
+/.superpowers/
+.env
+.env.*

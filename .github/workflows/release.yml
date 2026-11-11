@@ -1,0 +1,150 @@
+name: Build and release
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-15
+            platform: macos-arm64
+            arch: arm64
+          - os: macos-15-intel
+            platform: macos-x86_64
+            arch: x86_64
+          - os: ubuntu-24.04
+            platform: linux-x86_64
+            arch: x86_64
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Verify runner architecture
+        run: test "$(uname -m)" = "$EXPECTED_ARCH"
+        env:
+          EXPECTED_ARCH: ${{ matrix.arch }}
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y \
+            build-essential pkg-config libssl-dev libudev-dev \
+            libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
+            libxkbcommon-dev libwayland-dev libegl1-mesa-dev libgl1-mesa-dev \
+            xvfb xauth libgl1-mesa-dri
+      - name: Install current stable Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+          rustup override set stable
+          rustc --version
+          cargo --version
+      - name: Check formatting
+        run: cargo fmt --check
+      - name: Lint
+        run: cargo clippy --locked --all-targets -- -D warnings
+      - name: Test
+        run: cargo test --locked
+      - name: Build release
+        run: cargo build --release --locked
+      - name: Check executable
+        run: |
+          ./target/release/mde --version
+          ./target/release/mde --help
+      - name: Linux GUI smoke test
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set +e
+          timeout --kill-after=5s 10s xvfb-run -a env \
+            LIBGL_ALWAYS_SOFTWARE=1 MDE_STARTUP_LOG=1 \
+            ./target/release/mde --foreground examples/demo.md > gui-smoke.log 2>&1
+          status=$?
+          set -e
+          cat gui-smoke.log
+          if [ "$status" -ne 124 ]; then
+            echo "Expected a running GUI until timeout (124), got $status" >&2
+            exit 1
+          fi
+          grep -q "mde: first UI frame in" gui-smoke.log
+      - name: Package macOS app
+        if: runner.os == 'macOS'
+        run: ./scripts/package-macos.sh
+      - name: Create archive
+        shell: bash
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          archive="mde-$PLATFORM"
+          mkdir -p "dist/$archive"
+          cp target/release/mde README.md LICENSE "dist/$archive/"
+          cp -R examples "dist/$archive/"
+          if [ "$RUNNER_OS" = macOS ]; then
+            cp -R target/mde.app "dist/$archive/"
+          fi
+          tar -czf "dist/$archive.tar.gz" -C dist "$archive"
+          rm -r "dist/$archive"
+      - name: Upload build
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: mde-${{ matrix.platform }}
+          path: dist/*.tar.gz
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish release
+    needs: build
+    if: >-
+      github.event_name != 'pull_request' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download builds
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: mde-*
+          path: dist
+          merge-multiple: true
+      - name: Publish immutable prerelease
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          cd dist
+          sha256sum ./*.tar.gz > SHA256SUMS
+          tag="build-${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:7}"
+          cat > ../release-notes.md <<NOTES
+          Автоматическая release-сборка коммита $GITHUB_SHA.
+
+          - macos-arm64: macOS Apple Silicon; архив содержит mde.app и CLI.
+          - macos-x86_64: macOS Intel; архив содержит mde.app и CLI.
+          - linux-x86_64: Linux x86_64, собрано на Ubuntu 24.04 (glibc 2.39+).
+
+          Архивы включают README с инструкциями, лицензию и примеры.
+          macOS-приложение подписано ad-hoc, без Apple notarization.
+          SHA256SUMS содержит контрольные суммы архивов.
+          NOTES
+          gh release create "$tag" ./*.tar.gz SHA256SUMS \
+            --target "$GITHUB_SHA" \
+            --title "mde — build ${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}" \
+            --notes-file ../release-notes.md \
+            --prerelease --latest=false

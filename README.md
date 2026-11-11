@@ -69,7 +69,7 @@ mde notes.md
 
 ```sh
 sudo apt-get update
-sudo apt-get install -y libxkbcommon0 libwayland-client0 libegl1 libgl1 \
+sudo apt-get install -y libxkbcommon0 libxkbcommon-x11-0 libwayland-client0 libegl1 libgl1 \
   libxcb-render0 libxcb-shape0 libxcb-xfixes0 libdbus-1-3 \
   xdg-desktop-portal xdg-desktop-portal-gtk zenity
 ```
@@ -120,7 +120,7 @@ xcode-select --install
 sudo apt-get update
 sudo apt-get install -y build-essential pkg-config libssl-dev libudev-dev \
   libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev \
-  libxkbcommon-dev libwayland-dev libegl1-mesa-dev libgl1-mesa-dev
+  libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libegl1-mesa-dev libgl1-mesa-dev
 ```
 
 Затем на обеих платформах:

@@ -1,16 +1,93 @@
-MIT License
+mde Source-Available License 1.0 — No Monetization
 
 Copyright (c) 2026 Evdokimov Ostap
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+1. Scope and definitions
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+"Software" means the mde source code, executables, and associated materials
+made available by the copyright holder under this license. "Modified Version"
+means any modification, adaptation, fork, translation, or derivative work of
+the Software, regardless of how much functionality is added or changed.
+
+This license covers only material the copyright holder is entitled to license.
+Third-party components retain their own licenses. These terms do not restrict
+the independent use of those components under their respective licenses.
+
+2. Permission
+
+Subject to all conditions below, permission is granted, free of charge, to use,
+copy, inspect, modify, fork, build, and distribute the Software and Modified
+Versions, in source or executable form. Use inside commercial companies and
+for paid professional work is expressly permitted as described in section 4.
+
+3. No monetization
+
+You may not monetize the Software or any Modified Version, directly or
+indirectly. In particular, you may not:
+
+(a) sell, rent, lease, sublicense for payment, or otherwise charge money or
+other consideration for copies, licenses, downloads, distribution, access,
+or use of the Software or a Modified Version;
+
+(b) offer the Software or a Modified Version as a paid hosted service,
+subscription, managed service, or feature of a paid product or service;
+
+(c) include the Software or a Modified Version in a bundle or product sold
+for money or other consideration, even if the Software is described as free;
+
+(d) earn advertising, affiliate, sponsorship, donation, crowdfunding, or
+similar revenue specifically tied to developing, distributing, providing
+access to, or promoting the Software or a Modified Version; or
+
+(e) charge third parties for installation, hosting, customization, maintenance,
+support, consulting, or development of the Software or a Modified Version.
+
+These restrictions apply to every Modified Version, including versions with
+substantial new functionality, and to monetization through an intermediary.
+You may not remove or evade these restrictions by changing the name, packaging,
+license notice, or distribution method, or by adding new functionality.
+
+4. Commercial workplaces and independent work products
+
+You may use the Software or a Modified Version internally in a business,
+employment, or professional practice, including to create, edit, and read
+documents for paid work. Employees may be paid for internal deployment,
+maintenance, and modification for their employer's own use. Such internal use
+is not monetization under section 3.
+
+Documents and other independent work products created or edited with the
+Software are not governed by this license solely because the Software was
+used to create or edit them. You may sell those independent work products or
+services based on them, provided you do not distribute, provide access to,
+or otherwise monetize the Software or a Modified Version as part of them.
+
+5. Redistribution and modifications
+
+Every distributed copy of the Software or a Modified Version must include
+this complete license and the copyright notice above. Identify your changes
+and do not imply endorsement by the original copyright holder.
+
+All portions of a Modified Version derived from the Software remain subject
+to this license. Recipients receive the same permissions and restrictions
+directly under this license. You may not relicense those portions or impose
+terms that remove the restrictions or permissions granted here. Unrelated,
+independently developed components retain their own licenses.
+
+Distribution must be free of charge, and may not be conditioned on payment,
+a subscription, a donation, an advertising payment, or other consideration.
+Providing source code with an executable is encouraged but not required.
+
+6. Other rights and termination
+
+No trademark rights are granted. Nothing here limits rights that cannot be
+restricted by applicable law. Separate written permission from the copyright
+holder is required for uses outside this license.
+
+If you violate these conditions, the permissions granted to you under this
+license terminate automatically. Rights already granted to recipients who
+comply with this license are not terminated by your violation.
+
+7. Disclaimer
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -18,4 +95,4 @@ FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+SOFTWARE, TO THE EXTENT PERMITTED BY APPLICABLE LAW.

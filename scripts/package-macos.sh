@@ -6,8 +6,9 @@ if [ "$(uname -s)" != Darwin ]; then
     exit 1
 fi
 cargo build --release --locked
-mkdir -p target/mde.app/Contents/MacOS
+mkdir -p target/mde.app/Contents/MacOS target/mde.app/Contents/Resources
 cp target/release/mde target/mde.app/Contents/MacOS/mde
+cp LICENSE THIRD_PARTY_NOTICES.txt target/mde.app/Contents/Resources/
 cat > target/mde.app/Contents/Info.plist <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

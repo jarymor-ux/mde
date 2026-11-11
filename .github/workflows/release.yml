@@ -53,6 +53,18 @@ jobs:
           rustup override set stable
           rustc --version
           cargo --version
+      - name: Check third-party notice coverage
+        run: |
+          python3 - <<'PYTHON'
+          import pathlib
+          import tomllib
+          lock = tomllib.loads(pathlib.Path("Cargo.lock").read_text())
+          notices = pathlib.Path("THIRD_PARTY_NOTICES.txt").read_text()
+          missing = [f"{p['name']} {p['version']}" for p in lock["package"]
+                     if p.get("source") and f"Package: {p['name']} {p['version']}\n" not in notices]
+          if missing:
+              raise SystemExit("Update THIRD_PARTY_NOTICES.txt for: " + ", ".join(missing))
+          PYTHON
       - name: Check formatting
         run: cargo fmt --check
       - name: Lint
@@ -91,7 +103,7 @@ jobs:
         run: |
           archive="mde-$PLATFORM"
           mkdir -p "dist/$archive"
-          cp target/release/mde README.md LICENSE "dist/$archive/"
+          cp target/release/mde README.md LICENSE THIRD_PARTY_NOTICES.txt "dist/$archive/"
           cp -R examples "dist/$archive/"
           if [ "$RUNNER_OS" = macOS ]; then
             cp -R target/mde.app "dist/$archive/"
@@ -141,6 +153,9 @@ jobs:
 
           Архивы включают README с инструкциями, лицензию и примеры.
           macOS-приложение подписано ad-hoc, без Apple notarization.
+          Лицензия mde: Source-Available — No Monetization (полный текст в LICENSE).
+          Бесплатные форки и использование на работе разрешены; монетизация программы
+          и любых изменённых версий запрещена.
           SHA256SUMS содержит контрольные суммы архивов.
           NOTES
           gh release create "$tag" ./*.tar.gz SHA256SUMS \

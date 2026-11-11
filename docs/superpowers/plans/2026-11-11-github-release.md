@@ -18,7 +18,7 @@ macOS packages are ad-hoc signed, not notarized; Linux builds use Ubuntu 24.04.
 ## Tasks
 
 - [x] Document source builds, binary installation, dependencies, and release behavior
-      in README.md; add the MIT license already declared by Cargo.toml.
+      in README.md; publish the project license in LICENSE and Cargo metadata.
 - [x] Add .github/workflows/release.yml: main/master push, PR, manual dispatch;
       three platform builds, archive/checksums, gated release job.
 - [x] Validate existing application (fmt, Clippy, tests, release build), shell syntax,
@@ -34,3 +34,10 @@ relevant regression checks; do not add implementation-mirroring tests.
 
 Local evidence: fmt, Clippy, 58 tests and release build pass; actionlint 1.7.12
 passes; macOS package signature verification and Info.plist validation pass.
+
+User updates: repository must be public. Replace MIT with a project-specific
+source-available no-monetization license: free forks/changes/distribution and
+commercial workplace use allowed; monetization of mde or any modified version
+prohibited. Explicitly preserve third-party licenses and disclose that the
+initial public MIT version cannot be retroactively revoked. Cancel the first
+workflow before artifacts/releases, then verify a new run with corrected license.

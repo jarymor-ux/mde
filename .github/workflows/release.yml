@@ -69,8 +69,8 @@ jobs:
           python3 - <<'PYTHON'
           import pathlib
           import tomllib
-          lock = tomllib.loads(pathlib.Path("Cargo.lock").read_text())
-          notices = pathlib.Path("THIRD_PARTY_NOTICES.txt").read_text()
+          lock = tomllib.loads(pathlib.Path("Cargo.lock").read_text(encoding="utf-8"))
+          notices = pathlib.Path("THIRD_PARTY_NOTICES.txt").read_text(encoding="utf-8")
           missing = [f"{p['name']} {p['version']}" for p in lock["package"]
                      if p.get("source") and f"Package: {p['name']} {p['version']}\n" not in notices]
           if missing:

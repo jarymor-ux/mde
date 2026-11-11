@@ -18,7 +18,10 @@ jobs:
   build:
     name: Build ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 40
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
     strategy:
       fail-fast: false
       matrix:
@@ -32,10 +35,18 @@ jobs:
           - os: ubuntu-24.04
             platform: linux-x86_64
             arch: x86_64
+          - os: windows-2025
+            platform: windows-x86_64
+            arch: AMD64
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Verify runner architecture
-        run: test "$(uname -m)" = "$EXPECTED_ARCH"
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then
+            test "$PROCESSOR_ARCHITECTURE" = "$EXPECTED_ARCH"
+          else
+            test "$(uname -m)" = "$EXPECTED_ARCH"
+          fi
         env:
           EXPECTED_ARCH: ${{ matrix.arch }}
       - name: Install Linux dependencies
@@ -75,8 +86,13 @@ jobs:
         run: cargo build --release --locked
       - name: Check executable
         run: |
-          ./target/release/mde --version
-          ./target/release/mde --help
+          binary=./target/release/mde
+          if [ "$RUNNER_OS" = Windows ]; then binary=./target/release/mde.exe; fi
+          "$binary" --version
+          "$binary" --help
+          if [ "$RUNNER_OS" = Windows ]; then
+            test -f ./target/release/mde-desktop.exe
+          fi
       - name: Linux GUI smoke test
         if: runner.os == 'Linux'
         shell: bash
@@ -96,7 +112,8 @@ jobs:
       - name: Package macOS app
         if: runner.os == 'macOS'
         run: ./scripts/package-macos.sh
-      - name: Create archive
+      - name: Create Unix archive
+        if: runner.os != 'Windows'
         shell: bash
         env:
           PLATFORM: ${{ matrix.platform }}
@@ -107,14 +124,44 @@ jobs:
           cp -R examples "dist/$archive/"
           if [ "$RUNNER_OS" = macOS ]; then
             cp -R target/mde.app "dist/$archive/"
+          else
+            cp scripts/install-linux.sh "dist/$archive/install.sh"
+            chmod +x "dist/$archive/install.sh"
           fi
           tar -czf "dist/$archive.tar.gz" -C dist "$archive"
           rm -r "dist/$archive"
+      - name: Package Windows portable ZIP
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $dir = 'dist/mde-windows-x86_64'
+          New-Item -ItemType Directory -Force -Path $dir | Out-Null
+          Copy-Item target/release/mde.exe, target/release/mde-desktop.exe, README.md, LICENSE, THIRD_PARTY_NOTICES.txt -Destination $dir
+          Copy-Item examples -Destination $dir -Recurse
+          Compress-Archive -Path $dir -DestinationPath "$dir.zip"
+      - name: Package Windows installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $compiler = (Get-Command ISCC.exe -ErrorAction SilentlyContinue).Source
+          if (-not $compiler) {
+            $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          }
+          if (-not (Test-Path $compiler)) {
+            choco install innosetup --yes --no-progress --limit-output
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            $compiler = Join-Path ${env:ProgramFiles(x86)} 'Inno Setup 6\ISCC.exe'
+          }
+          & $compiler scripts/windows-installer.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Upload build
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: mde-${{ matrix.platform }}
-          path: dist/*.tar.gz
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+            dist/*.exe
           if-no-files-found: error
           retention-days: 14
 
@@ -142,14 +189,15 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           cd dist
-          sha256sum ./*.tar.gz > SHA256SUMS
+          sha256sum ./*.tar.gz ./*.zip ./*.exe > SHA256SUMS
           tag="build-${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:7}"
           cat > ../release-notes.md <<NOTES
           Автоматическая release-сборка коммита $GITHUB_SHA.
 
           - macos-arm64: macOS Apple Silicon; архив содержит mde.app и CLI.
           - macos-x86_64: macOS Intel; архив содержит mde.app и CLI.
-          - linux-x86_64: Linux x86_64, собрано на Ubuntu 24.04 (glibc 2.39+).
+          - linux-x86_64: Linux x86_64, собрано на Ubuntu 24.04 (glibc 2.39+); install.sh создаёт ярлык.
+          - windows-x86_64: portable ZIP и установщик EXE с ярлыками на рабочем столе и в меню Пуск.
 
           Архивы включают README с инструкциями, лицензию и примеры.
           macOS-приложение подписано ad-hoc, без Apple notarization.
@@ -158,7 +206,7 @@ jobs:
           и любых изменённых версий запрещена.
           SHA256SUMS содержит контрольные суммы архивов.
           NOTES
-          gh release create "$tag" ./*.tar.gz SHA256SUMS \
+          gh release create "$tag" ./*.tar.gz ./*.zip ./*.exe SHA256SUMS \
             --target "$GITHUB_SHA" \
             --title "mde — build ${GITHUB_RUN_NUMBER}.${GITHUB_RUN_ATTEMPT}" \
             --notes-file ../release-notes.md \
